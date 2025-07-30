@@ -1,0 +1,171 @@
+name: Deploy Transaction API to OVH
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'TransactionAPI/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'TransactionAPI/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+        extensions: pdo, pdo_mysql, json, curl
+        
+    - name: Validate PHP syntax
+      run: |
+        find TransactionAPI -name "*.php" -exec php -l {} \;
+        
+    - name: Create deployment package
+      run: |
+        # Create a clean deployment directory
+        mkdir -p deploy
+        
+        # Copy API files
+        cp -r TransactionAPI/api/* deploy/
+        
+        # Create .htaccess for clean URLs
+        cat > deploy/.htaccess << 'EOF'
+        RewriteEngine On
+        
+        # Enable CORS for all origins (adjust as needed)
+        Header always set Access-Control-Allow-Origin "*"
+        Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+        Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+        
+        # Route all requests to index.php
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteRule ^(.*)$ index.php [QSA,L]
+        
+        # Security headers
+        Header always set X-Content-Type-Options nosniff
+        Header always set X-Frame-Options DENY
+        Header always set X-XSS-Protection "1; mode=block"
+        
+        # Hide PHP version
+        Header unset X-Powered-By
+        
+        # Deny access to sensitive files
+        <Files "*.sql">
+            Require all denied
+        </Files>
+        
+        <Files ".env">
+            Require all denied
+        </Files>
+        EOF
+        
+        # Create environment configuration
+        cat > deploy/.env << EOF
+        ENVIRONMENT=production
+        DB_HOST=${{ secrets.TRANSACTIONAPI_DB_HOST }}
+        DB_NAME=${{ secrets.TRANSACTIONAPI_DB_NAME }}
+        DB_USERNAME=${{ secrets.TRANSACTIONAPI_DB_USERNAME }}
+        DB_PASSWORD=${{ secrets.TRANSACTIONAPI_DB_PASSWORD }}
+        JWT_SECRET=${{ secrets.TRANSACTIONAPI_JWT_SECRET }}
+        EOF
+        
+        # Create database initialization script
+        cp TransactionAPI/database/database_schema.sql deploy/
+        
+        # Create info file
+        cat > deploy/deploy-info.json << EOF
+        {
+          "deployed_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+          "commit_hash": "${{ github.sha }}",
+          "branch": "${{ github.ref_name }}",
+          "workflow_run": "${{ github.run_number }}"
+        }
+        EOF
+        
+    - name: Deploy to OVH FTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ${{ secrets.TRANSACTIONAPI_FTP_SERVER }}
+        username: ${{ secrets.TRANSACTIONAPI_FTP_USERNAME }}
+        password: ${{ secrets.TRANSACTIONAPI_FTP_PASSWORD }}
+        protocol: ftps
+        port: 21
+        local-dir: ./deploy/
+        server-dir: ${{ secrets.TRANSACTIONAPI_FTP_REMOTE_DIR }}
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          **/.DS_Store
+          **/Thumbs.db
+          
+    - name: Test API endpoint
+      run: |
+        # Wait a moment for deployment to complete
+        sleep 10
+        
+        # Test health endpoint
+        curl -f "${{ secrets.TRANSACTIONAPI_BASE_URL }}/health" || echo "Health check failed"
+        
+    - name: Notify deployment status
+      if: always()
+      run: |
+        if [ "${{ job.status }}" == "success" ]; then
+          echo "✅ Transaction API deployed successfully to OVH"
+          echo "🔗 API URL: ${{ secrets.TRANSACTIONAPI_BASE_URL }}"
+          echo "📊 Health Check: ${{ secrets.TRANSACTIONAPI_BASE_URL }}/health"
+        else
+          echo "❌ Transaction API deployment failed"
+        fi
+        
+  validate-schema:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: testpassword
+          MYSQL_DATABASE: ledgerai_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Test database schema
+      run: |
+        # Wait for MySQL to be ready
+        sleep 10
+        
+        # Test schema creation
+        mysql -h127.0.0.1 -uroot -ptestpassword ledgerai_test < TransactionAPI/database/database_schema.sql
+        
+        # Verify tables were created
+        mysql -h127.0.0.1 -uroot -ptestpassword ledgerai_test -e "SHOW TABLES;"
+        
+        # Test sample data insertion
+        mysql -h127.0.0.1 -uroot -ptestpassword ledgerai_test -e "
+        INSERT INTO ledgerai_accounts (account_iban, account_number, account_owner, bank_name, currency_code) 
+        VALUES ('PL18105013571000009091885211', '1000009091885211', 'Test User', 'Test Bank', 'PLN');
+        
+        SELECT * FROM ledgerai_accounts;
+        SELECT * FROM ledgerai_categories LIMIT 5;
+        "
+        
+    - name: Validate PHP syntax
+      run: |
+        find TransactionAPI -name "*.php" -exec php -l {} \; 
