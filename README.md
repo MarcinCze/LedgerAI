@@ -1,5 +1,7 @@
 # LedgerAI
 
+[![Deploy Transaction API to OVH](https://github.com/MarcinCze/LedgerAI/actions/workflows/deploy-transaction-api.yml/badge.svg)](https://github.com/MarcinCze/LedgerAI/actions/workflows/deploy-transaction-api.yml)
+
 **LedgerAI** is a personal AI-powered finance assistant designed to analyze transactions from multiple banks, normalize them, and provide spending insights through a simple web interface.  
 It uses [Semantic Kernel](https://github.com/microsoft/semantic-kernel) for orchestration and [Azure OpenAI Service](https://azure.microsoft.com/en-us/products/cognitive-services/openai-service/) for natural language analysis.
 
