@@ -58,7 +58,9 @@ class JWT {
      */
     public function validateToken($token) {
         try {
+            error_log("JWT Validation: Starting validation for token");
             $payload = $this->decode($token);
+            error_log("JWT Validation: Token decoded successfully, jti: " . $payload['jti']);
             
             // Check if token exists and is not revoked
             $query = "SELECT * FROM ledgerai_access_tokens 
@@ -69,8 +71,11 @@ class JWT {
             $token_record = $stmt->fetch();
 
             if (!$token_record) {
+                error_log("JWT Validation: Token not found in database or expired");
                 return false;
             }
+            
+            error_log("JWT Validation: Token found in database, validation successful");
 
             // Update last used
             $update_query = "UPDATE ledgerai_access_tokens 
@@ -88,6 +93,7 @@ class JWT {
             return $payload;
         } catch (Exception $e) {
             error_log("JWT validation error: " . $e->getMessage());
+            error_log("JWT validation error file: " . $e->getFile() . " line: " . $e->getLine());
             return false;
         }
     }
@@ -112,6 +118,7 @@ class JWT {
      * Simple JWT decode (basic implementation)
      */
     private function decode($jwt) {
+        error_log("JWT Decode: Starting decode process");
         $parts = explode('.', $jwt);
         if (count($parts) !== 3) {
             throw new Exception('Invalid JWT format');
@@ -121,12 +128,19 @@ class JWT {
         $payload = json_decode($this->base64url_decode($parts[1]), true);
         $signature = $this->base64url_decode($parts[2]);
 
+        error_log("JWT Decode: Header and payload decoded successfully");
+        
         // Verify signature
         $expected_signature = hash_hmac('sha256', $parts[0] . "." . $parts[1], $this->secret_key, true);
         
+        error_log("JWT Decode: Secret key being used: " . (empty($this->secret_key) ? "EMPTY" : "SET"));
+        
         if (!hash_equals($signature, $expected_signature)) {
+            error_log("JWT Decode: Signature verification failed");
             throw new Exception('Invalid JWT signature');
         }
+        
+        error_log("JWT Decode: Signature verified successfully");
 
         // Check expiration
         if ($payload['exp'] < time()) {

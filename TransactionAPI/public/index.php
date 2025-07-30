@@ -89,19 +89,28 @@ $jwt = new JWT($db);
 
 // Authentication middleware (skip for health check and auth endpoint)
 if ($endpoint !== 'health' && $endpoint !== '' && $endpoint !== 'auth') {
+    error_log("Auth Middleware: Validating token for endpoint: " . $endpoint);
     $headers = getallheaders();
     $auth_header = $headers['Authorization'] ?? $headers['authorization'] ?? '';
     
+    error_log("Auth Middleware: Authorization header: " . (empty($auth_header) ? "MISSING" : "PRESENT"));
+    
     if (!preg_match('/Bearer\s+(.*)$/i', $auth_header, $matches)) {
+        error_log("Auth Middleware: Bearer token format invalid");
         Response::unauthorized('Missing or invalid authorization header');
     }
     
     $token = $matches[1];
+    error_log("Auth Middleware: Extracted token (first 20 chars): " . substr($token, 0, 20) . "...");
+    
     $payload = $jwt->validateToken($token);
     
     if (!$payload) {
+        error_log("Auth Middleware: Token validation failed");
         Response::unauthorized('Invalid or expired token');
     }
+    
+    error_log("Auth Middleware: Token validation successful");
     
     // Store user info for use in endpoints
     $_REQUEST['user_payload'] = $payload;
@@ -116,7 +125,9 @@ switch ($endpoint) {
             'api' => 'LedgerAI Transaction API',
             'version' => '1.0.0',
             'status' => 'healthy',
-            'database' => 'connected'
+            'database' => 'connected',
+            'jwt_secret_loaded' => !empty($_ENV['JWT_SECRET']),
+            'jwt_secret_fallback' => $_ENV['JWT_SECRET'] === 'your-secret-key-change-this'
         ], 'API is running');
         break;
         
