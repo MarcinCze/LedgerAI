@@ -196,7 +196,8 @@ switch ($endpoint) {
         
     case 'debug':
         // Debug endpoint to test JWT validation step by step
-        if ($request_method === 'POST') {
+        // TODO: Remove in production!
+        if ($_ENV['ENVIRONMENT'] !== 'production' && $request_method === 'POST') {
             $input = json_decode(file_get_contents('php://input'), true);
             $test_token = $input['token'] ?? '';
             
@@ -257,7 +258,9 @@ switch ($endpoint) {
         
     case 'headers':
         // Debug endpoint to see all available headers and server vars
-        $all_headers = getallheaders();
+        // TODO: Remove in production!
+        if ($_ENV['ENVIRONMENT'] !== 'production') {
+            $all_headers = getallheaders();
         $auth_vars = array_filter($_SERVER, function($key) {
             return strpos(strtolower($key), 'auth') !== false;
         }, ARRAY_FILTER_USE_KEY);
@@ -269,6 +272,9 @@ switch ($endpoint) {
             'content_type' => $_SERVER['CONTENT_TYPE'] ?? 'NOT_SET',
             'http_host' => $_SERVER['HTTP_HOST'] ?? 'NOT_SET'
         ], 'Headers debug information');
+        } else {
+            Response::notFound('Debug endpoint not available in production');
+        }
         break;
         
     default:
