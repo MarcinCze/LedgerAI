@@ -141,6 +141,8 @@ CREATE TABLE ledgerai_access_tokens (
 );
 
 -- Transaction categories - for reference and consistency
+-- 
+-- Note: Authentication tables moved to migration_001_authentication.sql
 CREATE TABLE ledgerai_categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
     category_name VARCHAR(50) NOT NULL,

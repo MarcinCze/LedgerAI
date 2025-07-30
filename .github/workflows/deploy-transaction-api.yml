@@ -45,6 +45,22 @@ jobs:
         DB_USERNAME=${{ secrets.TRANSACTIONAPI_DB_USERNAME }}
         DB_PASSWORD=${{ secrets.TRANSACTIONAPI_DB_PASSWORD }}
         JWT_SECRET=${{ secrets.TRANSACTIONAPI_JWT_SECRET }}
+        
+        # Direct User credentials (Human Administrator)
+        DIRECT_USER_USERNAME=${{ secrets.TRANSACTIONAPI_DIRECT_USER_USERNAME }}
+        DIRECT_USER_EMAIL=${{ secrets.TRANSACTIONAPI_DIRECT_USER_EMAIL }}
+        DIRECT_USER_PASSWORD=${{ secrets.TRANSACTIONAPI_DIRECT_USER_PASSWORD }}
+        DIRECT_USER_ROLE=${{ secrets.TRANSACTIONAPI_DIRECT_USER_ROLE }}
+        
+        # Agent AI credentials (Semantic Kernel Service)
+        AGENT_AI_USERNAME=${{ secrets.TRANSACTIONAPI_AGENT_AI_USERNAME }}
+        AGENT_AI_EMAIL=${{ secrets.TRANSACTIONAPI_AGENT_AI_EMAIL }}
+        AGENT_AI_PASSWORD=${{ secrets.TRANSACTIONAPI_AGENT_AI_PASSWORD }}
+        AGENT_AI_ROLE=${{ secrets.TRANSACTIONAPI_AGENT_AI_ROLE }}
+        
+        # API Keys
+        FRONTEND_API_KEY=${{ secrets.TRANSACTIONAPI_FRONTEND_API_KEY }}
+        SEMANTIC_KERNEL_API_KEY=${{ secrets.TRANSACTIONAPI_SEMANTIC_KERNEL_API_KEY }}
         EOF
         
         # Create deployment info

@@ -40,6 +40,7 @@ if (file_exists(__DIR__ . '/../.env')) {
 // Include required files from api directory
 require_once __DIR__ . '/../api/config/database.php';
 require_once __DIR__ . '/../api/helpers/JWT.php';
+require_once __DIR__ . '/../api/helpers/Authentication.php';
 require_once __DIR__ . '/../api/helpers/Response.php';
 require_once __DIR__ . '/../api/endpoints/accounts.php';
 require_once __DIR__ . '/../api/endpoints/transactions.php';
@@ -86,6 +87,10 @@ try {
 
 // Initialize JWT helper
 $jwt = new JWT($db);
+
+// Initialize Authentication helper and create users/API keys from environment
+$auth = new Authentication($db);
+$auth->initializeFromEnvironment();
 
 // Authentication middleware (skip for health check and auth endpoint)
 if ($endpoint !== 'health' && $endpoint !== '' && $endpoint !== 'auth') {
@@ -176,19 +181,64 @@ switch ($endpoint) {
         break;
         
     case 'auth':
-        // Token generation endpoint (for testing)
+        // Two-layer authentication endpoint: API Key + Username/Password
         if ($request_method === 'POST') {
             $input = json_decode(file_get_contents('php://input'), true);
-            $service_name = $input['service_name'] ?? 'test';
-            $scope = $input['scope'] ?? ['read', 'write'];
             
-            $token = $jwt->generateToken($service_name, null, $scope, 14400); // 4 hours
+            // LAYER 1: API Key validation
+            $api_key = $input['api_key'] ?? '';
+            error_log("Auth: Validating API key");
+            
+            $api_key_info = $auth->validateApiKey($api_key);
+            if (!$api_key_info) {
+                error_log("Auth: API key validation failed");
+                Response::error('Invalid API key', 401, [
+                    'error_type' => 'invalid_api_key',
+                    'message' => 'Please provide a valid API key'
+                ]);
+            }
+            
+            // LAYER 2: Username/Password validation
+            $username = $input['username'] ?? '';
+            $password = $input['password'] ?? '';
+            error_log("Auth: Validating user credentials for: " . $username);
+            
+            $user = $auth->validateUserCredentials($username, $password);
+            if (!$user) {
+                error_log("Auth: User credential validation failed for: " . $username);
+                Response::error('Invalid username or password', 401, [
+                    'error_type' => 'invalid_credentials',
+                    'message' => 'Please check your username and password'
+                ]);
+            }
+            
+            // Both layers passed - generate JWT token
+            $service_name = $input['service_name'] ?? $api_key_info['service_type'];
+            $scope = $auth->getUserScope($user['role']);
+            
+            error_log("Auth: Generating token for user " . $user['username'] . " with role " . $user['role']);
+            
+            $token = $jwt->generateToken(
+                $service_name, 
+                $user['id'],  // Store user ID in token
+                $scope, 
+                14400 // 4 hours
+            );
             
             Response::success([
                 'token' => $token,
                 'expires_in' => 14400,
-                'service_name' => $service_name
-            ], 'Token generated successfully');
+                'user' => [
+                    'id' => $user['id'],
+                    'username' => $user['username'],
+                    'role' => $user['role'],
+                    'scope' => $scope
+                ],
+                'service' => [
+                    'name' => $service_name,
+                    'type' => $api_key_info['service_type']
+                ]
+            ], 'Authentication successful');
         } else {
             Response::methodNotAllowed();
         }
