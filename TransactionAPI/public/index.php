@@ -97,7 +97,11 @@ if ($endpoint !== 'health' && $endpoint !== '' && $endpoint !== 'auth') {
     
     if (!preg_match('/Bearer\s+(.*)$/i', $auth_header, $matches)) {
         error_log("Auth Middleware: Bearer token format invalid");
-        Response::unauthorized('Missing or invalid authorization header');
+        Response::error('Missing or invalid authorization header', 401, [
+            'header_present' => !empty($auth_header),
+            'header_preview' => !empty($auth_header) ? substr($auth_header, 0, 20) . '...' : 'EMPTY',
+            'bearer_format_ok' => false
+        ]);
     }
     
     $token = $matches[1];
@@ -107,7 +111,12 @@ if ($endpoint !== 'health' && $endpoint !== '' && $endpoint !== 'auth') {
     
     if (!$payload) {
         error_log("Auth Middleware: Token validation failed");
-        Response::unauthorized('Invalid or expired token');
+        Response::error('Invalid or expired token', 401, [
+            'token_length' => strlen($token),
+            'token_parts' => count(explode('.', $token)),
+            'token_preview' => substr($token, 0, 30) . '...',
+            'suggestion' => 'Use /debug endpoint to analyze this token'
+        ]);
     }
     
     error_log("Auth Middleware: Token validation successful");
@@ -157,6 +166,67 @@ switch ($endpoint) {
                 'expires_in' => 14400,
                 'service_name' => $service_name
             ], 'Token generated successfully');
+        } else {
+            Response::methodNotAllowed();
+        }
+        break;
+        
+    case 'debug':
+        // Debug endpoint to test JWT validation step by step
+        if ($request_method === 'POST') {
+            $input = json_decode(file_get_contents('php://input'), true);
+            $test_token = $input['token'] ?? '';
+            
+            if (empty($test_token)) {
+                Response::error('Token required for debug test', 400);
+            }
+            
+            $debug_info = [
+                'step1_token_received' => !empty($test_token),
+                'step2_token_length' => strlen($test_token),
+                'step3_token_parts' => count(explode('.', $test_token)),
+                'step4_secret_available' => !empty($_ENV['JWT_SECRET']),
+                'step5_secret_is_fallback' => $_ENV['JWT_SECRET'] === 'your-secret-key-change-this'
+            ];
+            
+            try {
+                // Test JWT decode
+                $parts = explode('.', $test_token);
+                if (count($parts) === 3) {
+                    // Simple base64url decode for debug
+                    $header = json_decode(base64_decode(str_pad(strtr($parts[0], '-_', '+/'), strlen($parts[0]) % 4, '=', STR_PAD_RIGHT)), true);
+                    $payload = json_decode(base64_decode(str_pad(strtr($parts[1], '-_', '+/'), strlen($parts[1]) % 4, '=', STR_PAD_RIGHT)), true);
+                    
+                    $debug_info['step6_header_decoded'] = $header !== null;
+                    $debug_info['step7_payload_decoded'] = $payload !== null;
+                    $debug_info['step8_jti_found'] = isset($payload['jti']);
+                    $debug_info['step9_exp_found'] = isset($payload['exp']);
+                    $debug_info['step10_exp_time'] = $payload['exp'] ?? null;
+                    $debug_info['step11_current_time'] = time();
+                    $debug_info['step12_token_expired'] = isset($payload['exp']) ? ($payload['exp'] < time()) : null;
+                    
+                    if (isset($payload['jti'])) {
+                        // Check database
+                        $query = "SELECT token_id, expires_at, is_revoked FROM ledgerai_access_tokens WHERE token_id = ?";
+                        $stmt = $db->prepare($query);
+                        $stmt->execute([$payload['jti']]);
+                        $db_record = $stmt->fetch();
+                        
+                        $debug_info['step13_db_record_found'] = $db_record !== false;
+                        $debug_info['step14_db_revoked'] = $db_record ? (bool)$db_record['is_revoked'] : null;
+                        $debug_info['step15_db_expires_at'] = $db_record ? $db_record['expires_at'] : null;
+                    }
+                }
+                
+                // Test full validation
+                $validation_result = $jwt->validateToken($test_token);
+                $debug_info['step16_validation_result'] = $validation_result !== false;
+                
+            } catch (Exception $e) {
+                $debug_info['validation_error'] = $e->getMessage();
+            }
+            
+            Response::success($debug_info, 'Debug validation completed');
         } else {
             Response::methodNotAllowed();
         }
