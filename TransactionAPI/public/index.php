@@ -17,9 +17,9 @@ if ($is_development) {
     ini_set('log_errors', 1);
 }
 
-// Load environment variables from .env file
-if (file_exists(__DIR__ . '/.env')) {
-    $lines = file(__DIR__ . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+// Load environment variables from .env file in parent directory
+if (file_exists(__DIR__ . '/../.env')) {
+    $lines = file(__DIR__ . '/../.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
         if (strpos(trim($line), '#') === 0) {
             continue; // Skip comments
@@ -37,13 +37,13 @@ if (file_exists(__DIR__ . '/.env')) {
     }
 }
 
-// Include required files
-require_once 'config/database.php';
-require_once 'helpers/JWT.php';
-require_once 'helpers/Response.php';
-require_once 'endpoints/accounts.php';
-require_once 'endpoints/transactions.php';
-require_once 'endpoints/categories.php';
+// Include required files from api directory
+require_once __DIR__ . '/../api/config/database.php';
+require_once __DIR__ . '/../api/helpers/JWT.php';
+require_once __DIR__ . '/../api/helpers/Response.php';
+require_once __DIR__ . '/../api/endpoints/accounts.php';
+require_once __DIR__ . '/../api/endpoints/transactions.php';
+require_once __DIR__ . '/../api/endpoints/categories.php';
 
 // Set CORS headers
 Response::setCorsHeaders();
@@ -52,9 +52,8 @@ Response::setCorsHeaders();
 $request_uri = $_SERVER['REQUEST_URI'];
 $request_method = $_SERVER['REQUEST_METHOD'];
 
-// Remove query parameters and API base path
+// Remove query parameters and clean path
 $path = parse_url($request_uri, PHP_URL_PATH);
-$path = str_replace('/TransactionAPI/api', '', $path);
 $path = trim($path, '/');
 
 // Split path into segments
