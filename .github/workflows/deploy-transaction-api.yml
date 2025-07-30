@@ -92,34 +92,25 @@ jobs:
         }
         EOF
         
-    - name: Deploy to OVH SFTP
+    - name: Deploy to OVH FTP
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
         server: ${{ secrets.TRANSACTIONAPI_FTP_SERVER }}
         username: ${{ secrets.TRANSACTIONAPI_FTP_USERNAME }}
         password: ${{ secrets.TRANSACTIONAPI_FTP_PASSWORD }}
-        protocol: sftp
-        port: 22
+        protocol: ftp
+        port: 21
         local-dir: ./deploy/
         server-dir: ${{ secrets.TRANSACTIONAPI_FTP_REMOTE_DIR }}
+        # Clean deployment - removes old files that no longer exist in source
+        dangerous-clean-slate: false
+        # Set to 'true' if you want to delete all files on server first (careful!)
         exclude: |
           **/.git*
           **/.git*/**
           **/node_modules/**
           **/.DS_Store
           **/Thumbs.db
-          
-    # Alternative SFTP deployment if the above fails:
-    # - name: Deploy to OVH SFTP (Alternative)
-    #   uses: wlixcc/SFTP-Deploy-Action@v1.2.4
-    #   with:
-    #     server: ${{ secrets.TRANSACTIONAPI_FTP_SERVER }}
-    #     username: ${{ secrets.TRANSACTIONAPI_FTP_USERNAME }}
-    #     password: ${{ secrets.TRANSACTIONAPI_FTP_PASSWORD }}
-    #     port: 22
-    #     local_path: './deploy/*'
-    #     remote_path: ${{ secrets.TRANSACTIONAPI_FTP_REMOTE_DIR }}
-    #     sftp_only: true
           
     - name: Test API endpoint
       run: |
