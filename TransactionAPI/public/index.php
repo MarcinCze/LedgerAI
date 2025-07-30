@@ -87,8 +87,8 @@ try {
 // Initialize JWT helper
 $jwt = new JWT($db);
 
-// Authentication middleware (skip for health check)
-if ($endpoint !== 'health' && $endpoint !== '') {
+// Authentication middleware (skip for health check and auth endpoint)
+if ($endpoint !== 'health' && $endpoint !== '' && $endpoint !== 'auth') {
     $headers = getallheaders();
     $auth_header = $headers['Authorization'] ?? $headers['authorization'] ?? '';
     
@@ -139,11 +139,11 @@ switch ($endpoint) {
             $service_name = $input['service_name'] ?? 'test';
             $scope = $input['scope'] ?? ['read', 'write'];
             
-            $token = $jwt->generateToken($service_name, null, $scope, 86400); // 24 hours
+            $token = $jwt->generateToken($service_name, null, $scope, 14400); // 4 hours
             
             Response::success([
                 'token' => $token,
-                'expires_in' => 86400,
+                'expires_in' => 14400,
                 'service_name' => $service_name
             ], 'Token generated successfully');
         } else {
