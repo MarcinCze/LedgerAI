@@ -1,7 +1,7 @@
 <?php
 /**
  * LedgerAI Transaction API - Main Entry Point
- * Routes requests to appropriate CRUD endpoints
+ * Routes requests to appropriate CRUD endpoints.
  */
 
 // Error reporting configuration

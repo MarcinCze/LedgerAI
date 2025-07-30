@@ -57,6 +57,16 @@ jobs:
         }
         EOF
         
+        # Create PHP test file for debugging
+        cat > deploy/public/test.php << 'EOF'
+        <?php
+        echo "PHP is working! Server time: " . date('Y-m-d H:i:s') . "\n";
+        echo "PHP version: " . phpversion() . "\n";
+        echo "Current directory: " . __DIR__ . "\n";
+        echo "Files in directory: " . implode(', ', scandir(__DIR__)) . "\n";
+        ?>
+        EOF
+        
     - name: Deploy to OVH FTP
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
@@ -87,8 +97,24 @@ jobs:
         # Wait a moment for deployment to complete
         sleep 10
         
-        # Test health endpoint
-        curl -f "${{ secrets.TRANSACTIONAPI_BASE_URL }}/health" || echo "Health check failed"
+        # Test health endpoint with detailed debugging
+        echo "==== DEBUGGING HEALTH CHECK ===="
+        echo "Base URL: ${{ secrets.TRANSACTIONAPI_BASE_URL }}"
+        
+        echo "1. Testing root domain response:"
+        curl -I "${{ secrets.TRANSACTIONAPI_BASE_URL }}/" || echo "Root domain check failed"
+        
+        echo "2. Testing deploy-info.json (should be in public folder):"
+        curl -I "${{ secrets.TRANSACTIONAPI_BASE_URL }}/deploy-info.json" || echo "Deploy info not accessible"
+        
+        echo "3. Testing health endpoint:"
+        curl -v "${{ secrets.TRANSACTIONAPI_BASE_URL }}/health" || echo "Health check failed"
+        
+        echo "4. Testing PHP functionality:"
+        curl -v "${{ secrets.TRANSACTIONAPI_BASE_URL }}/test.php" || echo "PHP test failed"
+        
+        echo "5. Testing with index.php explicitly:"
+        curl -v "${{ secrets.TRANSACTIONAPI_BASE_URL }}/index.php" || echo "Direct index.php failed"
         
     - name: Notify deployment status
       if: always()
