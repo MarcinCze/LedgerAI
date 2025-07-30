@@ -33,19 +33,19 @@ class Authentication {
      * Create user from environment variables if not exists
      */
     private function createUserFromEnv($prefix) {
-        $username = $_ENV["${prefix}_USERNAME"] ?? null;
-        $email = $_ENV["${prefix}_EMAIL"] ?? null;
-        $password = $_ENV["${prefix}_PASSWORD"] ?? null;
-        $role = $_ENV["${prefix}_ROLE"] ?? 'user';
+        $username = $_ENV["{$prefix}_USERNAME"] ?? null;
+        $email = $_ENV["{$prefix}_EMAIL"] ?? null;
+        $password = $_ENV["{$prefix}_PASSWORD"] ?? null;
+        $role = $_ENV["{$prefix}_ROLE"] ?? 'user';
 
         if (!$username || !$email || !$password) {
-            error_log("Authentication: Skipping ${prefix} - missing credentials");
+            error_log("Authentication: Skipping {$prefix} - missing credentials");
             return false;
         }
 
         // Check if user already exists
         if ($this->userExists($username)) {
-            error_log("Authentication: User ${username} already exists, skipping");
+            error_log("Authentication: User {$username} already exists, skipping");
             return true;
         }
 
@@ -57,10 +57,10 @@ class Authentication {
             $stmt = $this->db->prepare($query);
             $stmt->execute([$username, $email, $password_hash, $role]);
 
-            error_log("Authentication: Created user ${username} with role ${role}");
+            error_log("Authentication: Created user {$username} with role {$role}");
             return true;
         } catch (Exception $e) {
-            error_log("Authentication: Failed to create user ${username}: " . $e->getMessage());
+            error_log("Authentication: Failed to create user {$username}: " . $e->getMessage());
             return false;
         }
     }
@@ -72,7 +72,7 @@ class Authentication {
         $api_key = $_ENV[$env_key] ?? null;
         
         if (!$api_key) {
-            error_log("Authentication: Skipping ${env_key} - not found in environment");
+            error_log("Authentication: Skipping {$env_key} - not found in environment");
             return false;
         }
 
@@ -80,7 +80,7 @@ class Authentication {
 
         // Check if API key already exists
         if ($this->apiKeyExists($key_name)) {
-            error_log("Authentication: API key ${key_name} already exists, skipping");
+            error_log("Authentication: API key {$key_name} already exists, skipping");
             return true;
         }
 
@@ -92,10 +92,10 @@ class Authentication {
             $stmt = $this->db->prepare($query);
             $stmt->execute([$key_name, $api_key_hash, $service_type]);
 
-            error_log("Authentication: Created API key ${key_name} for ${service_type}");
+            error_log("Authentication: Created API key {$key_name} for {$service_type}");
             return true;
         } catch (Exception $e) {
-            error_log("Authentication: Failed to create API key ${key_name}: " . $e->getMessage());
+            error_log("Authentication: Failed to create API key {$key_name}: " . $e->getMessage());
             return false;
         }
     }
