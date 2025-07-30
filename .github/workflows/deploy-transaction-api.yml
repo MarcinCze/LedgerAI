@@ -102,19 +102,19 @@ jobs:
         echo "Base URL: ${{ secrets.TRANSACTIONAPI_BASE_URL }}"
         
         echo "1. Testing root domain response:"
-        curl -I "${{ secrets.TRANSACTIONAPI_BASE_URL }}/" || echo "Root domain check failed"
+        curl -H "User-Agent: Mozilla/5.0 (GitHub-Actions)" -I "${{ secrets.TRANSACTIONAPI_BASE_URL }}/" || echo "Root domain check failed"
         
         echo "2. Testing deploy-info.json (should be in public folder):"
-        curl -I "${{ secrets.TRANSACTIONAPI_BASE_URL }}/deploy-info.json" || echo "Deploy info not accessible"
+        curl -H "User-Agent: Mozilla/5.0 (GitHub-Actions)" -I "${{ secrets.TRANSACTIONAPI_BASE_URL }}/deploy-info.json" || echo "Deploy info not accessible"
         
         echo "3. Testing health endpoint:"
-        curl -v "${{ secrets.TRANSACTIONAPI_BASE_URL }}/health" || echo "Health check failed"
+        curl -H "User-Agent: Mozilla/5.0 (GitHub-Actions)" -f "${{ secrets.TRANSACTIONAPI_BASE_URL }}/health" || echo "Health check failed"
         
         echo "4. Testing PHP functionality:"
-        curl -v "${{ secrets.TRANSACTIONAPI_BASE_URL }}/test.php" || echo "PHP test failed"
+        curl -H "User-Agent: Mozilla/5.0 (GitHub-Actions)" "${{ secrets.TRANSACTIONAPI_BASE_URL }}/test.php" || echo "PHP test failed"
         
         echo "5. Testing with index.php explicitly:"
-        curl -v "${{ secrets.TRANSACTIONAPI_BASE_URL }}/index.php" || echo "Direct index.php failed"
+        curl -H "User-Agent: Mozilla/5.0 (GitHub-Actions)" "${{ secrets.TRANSACTIONAPI_BASE_URL }}/index.php" || echo "Direct index.php failed"
         
     - name: Notify deployment status
       if: always()

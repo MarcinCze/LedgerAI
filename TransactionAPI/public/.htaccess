@@ -18,11 +18,20 @@ Header always set X-XSS-Protection "1; mode=block"
 # Hide PHP version
 Header unset X-Powered-By
 
-# Deny access to sensitive files
+# Allow GitHub Actions and monitoring tools
+<RequireAll>
+    Require all granted
+</RequireAll>
+
+# Only deny access to sensitive files (more specific)
+<Files ".env">
+    Require all denied
+</Files>
+
 <Files "*.sql">
     Require all denied
 </Files>
 
-<Files ".env">
+<Files "database_schema.sql">
     Require all denied
 </Files>
