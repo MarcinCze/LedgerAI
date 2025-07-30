@@ -1,7 +1,7 @@
 <?php
 /**
  * LedgerAI Transaction API - Accounts Endpoint
- * CRUD operations for bank accounts
+ * CRUD operations for bank accounts.
  */
 
 function handleAccounts($db, $method, $resource_id) {
