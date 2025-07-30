@@ -2,6 +2,9 @@
 -- MySQL/MariaDB compatible schema for OVH hosting
 -- Data normalization handled by Semantic Kernel agent
 
+-- Set SQL mode for better compatibility
+SET SQL_MODE = 'NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO';
+
 -- Accounts table - stores bank account information and current state
 CREATE TABLE ledgerai_accounts (
     id INT AUTO_INCREMENT PRIMARY KEY,

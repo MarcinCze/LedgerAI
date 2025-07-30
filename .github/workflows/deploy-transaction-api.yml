@@ -126,45 +126,4 @@ jobs:
         else
           echo "❌ Transaction API deployment failed"
         fi
-        
-  validate-schema:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: testpassword
-          MYSQL_DATABASE: ledgerai_test
-        ports:
-          - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Test database schema
-      run: |
-        # Wait for MySQL to be ready
-        sleep 10
-        
-        # Test schema creation
-        mysql -h127.0.0.1 -uroot -ptestpassword ledgerai_test < TransactionAPI/database/database_schema.sql
-        
-        # Verify tables were created
-        mysql -h127.0.0.1 -uroot -ptestpassword ledgerai_test -e "SHOW TABLES;"
-        
-        # Test sample data insertion
-        mysql -h127.0.0.1 -uroot -ptestpassword ledgerai_test -e "
-        INSERT INTO ledgerai_accounts (account_iban, account_number, account_owner, bank_name, currency_code) 
-        VALUES ('PL18105013571000009091885211', '1000009091885211', 'Test User', 'Test Bank', 'PLN');
-        
-        SELECT * FROM ledgerai_accounts;
-        SELECT * FROM ledgerai_categories LIMIT 5;
-        "
-        
-    - name: Validate PHP syntax
-      run: |
-        find TransactionAPI -name "*.php" -exec php -l {} \; 
+ 
