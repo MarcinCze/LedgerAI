@@ -90,8 +90,22 @@ $jwt = new JWT($db);
 // Authentication middleware (skip for health check and auth endpoint)
 if ($endpoint !== 'health' && $endpoint !== '' && $endpoint !== 'auth') {
     error_log("Auth Middleware: Validating token for endpoint: " . $endpoint);
+    
+    // Multiple ways to get Authorization header (OVH compatibility)
     $headers = getallheaders();
     $auth_header = $headers['Authorization'] ?? $headers['authorization'] ?? '';
+    
+    // Fallback methods for servers that strip Authorization header
+    if (empty($auth_header)) {
+        $auth_header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    }
+    if (empty($auth_header)) {
+        $auth_header = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
+    }
+    if (empty($auth_header) && function_exists('apache_request_headers')) {
+        $apache_headers = apache_request_headers();
+        $auth_header = $apache_headers['Authorization'] ?? $apache_headers['authorization'] ?? '';
+    }
     
     error_log("Auth Middleware: Authorization header: " . (empty($auth_header) ? "MISSING" : "PRESENT"));
     
@@ -100,7 +114,16 @@ if ($endpoint !== 'health' && $endpoint !== '' && $endpoint !== 'auth') {
         Response::error('Missing or invalid authorization header', 401, [
             'header_present' => !empty($auth_header),
             'header_preview' => !empty($auth_header) ? substr($auth_header, 0, 20) . '...' : 'EMPTY',
-            'bearer_format_ok' => false
+            'bearer_format_ok' => false,
+            'debug_headers' => [
+                'getallheaders_auth' => $headers['Authorization'] ?? 'NOT_FOUND',
+                'getallheaders_auth_lower' => $headers['authorization'] ?? 'NOT_FOUND',
+                'server_http_auth' => $_SERVER['HTTP_AUTHORIZATION'] ?? 'NOT_FOUND',
+                'server_redirect_auth' => $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? 'NOT_FOUND',
+                'available_server_vars' => array_keys(array_filter($_SERVER, function($key) {
+                    return strpos(strtolower($key), 'auth') !== false;
+                }, ARRAY_FILTER_USE_KEY))
+            ]
         ]);
     }
     
@@ -230,6 +253,22 @@ switch ($endpoint) {
         } else {
             Response::methodNotAllowed();
         }
+        break;
+        
+    case 'headers':
+        // Debug endpoint to see all available headers and server vars
+        $all_headers = getallheaders();
+        $auth_vars = array_filter($_SERVER, function($key) {
+            return strpos(strtolower($key), 'auth') !== false;
+        }, ARRAY_FILTER_USE_KEY);
+        
+        Response::success([
+            'all_headers' => $all_headers,
+            'server_auth_vars' => $auth_vars,
+            'request_method' => $_SERVER['REQUEST_METHOD'],
+            'content_type' => $_SERVER['CONTENT_TYPE'] ?? 'NOT_SET',
+            'http_host' => $_SERVER['HTTP_HOST'] ?? 'NOT_SET'
+        ], 'Headers debug information');
         break;
         
     default:
