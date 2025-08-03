@@ -1,0 +1,19 @@
+meta {
+  name: Chat/History/Thread_Id
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{SERVICE_URL}}/chat/history/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 123
+}
+
+settings {
+  encodeUrl: true
+}

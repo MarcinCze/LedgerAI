@@ -1,0 +1,15 @@
+meta {
+  name: Chat/Threads
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{SERVICE_URL}}/chat/messages
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

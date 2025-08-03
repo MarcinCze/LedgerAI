@@ -1,0 +1,23 @@
+meta {
+  name: Skills/Skill_Name
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{SERVICE_URL}}/skills/:skillName
+  body: none
+  auth: inherit
+}
+
+params:query {
+  : 
+}
+
+params:path {
+  skillName: someSkill
+}
+
+settings {
+  encodeUrl: true
+}

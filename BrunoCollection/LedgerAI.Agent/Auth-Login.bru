@@ -1,0 +1,15 @@
+meta {
+  name: Auth/Login
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{SERVICE_URL}}/auth/login
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

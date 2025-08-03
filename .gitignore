@@ -1,0 +1,70 @@
+###############################################################################
+#  ASP.NET / Visual Studio
+###############################################################################
+# Solution & IDE-specific
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+bin/
+obj/
+**/bin/
+**/obj/
+
+# NuGet packages
+*.nupkg
+*.snupkg
+packages/
+# When using `dotnet restore` this is safe to ignore
+*.nupkg
+
+# Publish / bundling
+publish/
+artifacts/
+wwwroot/dist/
+BundleConfig.json
+
+# Logs & temp
+*.log
+logs/
+temp/
+tmp/
+
+# Rider / ReSharper / VS for Mac
+.idea/
+*.DotSettings.user
+.ReSharper*/
+*.[Rr]e[Ss]harper
+*_Resharper*/
+
+# VS Code
+.vscode/*
+
+###############################################################################
+#  Agent-specific (your ASP.NET project sits in Agent/)
+###############################################################################
+Agent/bin/
+Agent/obj/
+
+###############################################################################
+#  Secrets & config overrides
+###############################################################################
+**/appsettings.Development.json
+**/appsettings.Local.json
+secrets.json
+
+###############################################################################
+#  Test data — keep the folder, ignore its contents
+###############################################################################
+# If test_data is at repo root
+test_data/**
+
+# If you sometimes create it inside Agent/
+Agent/test_data/**
+
+# Allow a placeholder file so the empty folder can stay in Git
+!test_data/.gitkeep
+!Agent/test_data/.gitkeep
