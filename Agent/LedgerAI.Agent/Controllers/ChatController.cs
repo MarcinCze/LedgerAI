@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using LedgerAI.Agent.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace LedgerAI.Agent.Controllers
 {
@@ -6,13 +8,24 @@ namespace LedgerAI.Agent.Controllers
     [Route("[controller]")]
     public class ChatController : ControllerBase
     {
-        [HttpPost("messages")]
-        public IActionResult PostMessage()
+        private readonly IChatCompletionService chatService;
+
+        public ChatController(IChatCompletionService chatCompletionService)
         {
-            return new OkObjectResult(new
+            this.chatService = chatCompletionService;
+        }
+
+        [HttpPost("messages")]
+        public async Task<IActionResult> PostMessage(PostMessageRequest request)
+        {
+            var result = await chatService.GetChatMessageContentAsync(request.Message);
+
+            return Ok(new PostMessageResponse
             {
-                Message = "Chat messages received successfully",
-                Status = "Success"
+                Message = request.Message,
+                ThreadId = request.ThreadId,
+                Status = "Success",
+                Response = result.Content
             });
         }
 
