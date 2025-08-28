@@ -1,6 +1,6 @@
-﻿using LedgerAI.Agent.Models;
+﻿using LedgerAI.Agent.Logic.Chat;
+using LedgerAI.Agent.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace LedgerAI.Agent.Controllers
 {
@@ -8,24 +8,32 @@ namespace LedgerAI.Agent.Controllers
     [Route("[controller]")]
     public class ChatController : ControllerBase
     {
-        private readonly IChatCompletionService chatService;
+        private readonly IPostSingleMessageCommand postSingleMessageCommand;
 
-        public ChatController(IChatCompletionService chatCompletionService)
+        public ChatController(
+            IPostSingleMessageCommand postSingleMessageCommand
+            )
         {
-            this.chatService = chatCompletionService;
+            this.postSingleMessageCommand = postSingleMessageCommand;
         }
 
         [HttpPost("messages")]
-        public async Task<IActionResult> PostMessage(PostMessageRequest request)
+        public async Task<IActionResult> PostMessage([FromForm] PostMessageRequest request)
         {
-            var result = await chatService.GetChatMessageContentAsync(request.Message);
-
+            using var stream = request.File?.OpenReadStream();
+            var (threadId, response) = await this.postSingleMessageCommand.PostSingleMessageAsync(
+                request.ThreadId, 
+                request.Message, 
+                stream, 
+                request.File?.FileName
+                );
+            
             return Ok(new PostMessageResponse
             {
                 Message = request.Message,
-                ThreadId = request.ThreadId,
+                ThreadId = threadId,
                 Status = "Success",
-                Response = result.Content
+                Response = response
             });
         }
 

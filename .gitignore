@@ -68,3 +68,8 @@ Agent/test_data/**
 # Allow a placeholder file so the empty folder can stay in Git
 !test_data/.gitkeep
 !Agent/test_data/.gitkeep
+
+###############################################################################
+#  Incoming files storage
+###############################################################################
+Agent/LedgerAI.Agent/TempUploads/**

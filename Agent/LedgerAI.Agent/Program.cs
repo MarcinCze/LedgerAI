@@ -1,23 +1,18 @@
-using Microsoft.SemanticKernel;
+using LedgerAI.Agent;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
-builder.Services.AddAzureOpenAIChatCompletion(
-    deploymentName: builder.Configuration["AzureOpenAI:Deployment"],
-    endpoint: builder.Configuration["AzureOpenAI:Endpoint"],
-    apiKey: builder.Configuration["AzureOpenAI:ApiKey"]
-);
+builder.Services
+    .AddEndpointsApiExplorer()
+    .AddSwaggerGen()
+    .AddSemanticKernelDependencies(builder.Configuration)
+    .AddApplicationDependencies()
+    .AddCustomDependencies();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

@@ -6,14 +6,19 @@ meta {
 
 post {
   url: {{SERVICE_URL}}/chat/messages
-  body: json
+  body: multipartForm
   auth: inherit
 }
 
 body:json {
   {
-    "message": "Which generation of SeatLeon is from 2021?"
+    "message": "Who is general Franco?"
   }
+}
+
+body:multipart-form {
+  Message: Analyze the bank statement file @contentType(application/json)
+  File: @file(C:\GITPriv\LedgerAI\test_data\Wyciag_dla_KONTO_Direct__06.07.2025.sta) @contentType(application/octet-stream)
 }
 
 settings {

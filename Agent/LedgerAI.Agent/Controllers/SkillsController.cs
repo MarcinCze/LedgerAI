@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.SemanticKernel;
 
 namespace LedgerAI.Agent.Controllers
 {
@@ -6,17 +7,31 @@ namespace LedgerAI.Agent.Controllers
     [Route("[controller]")]
     public class SkillsController : ControllerBase
     {
+        private readonly Kernel kernel;
+
+        public SkillsController(Kernel kernel)
+        {
+            this.kernel = kernel;
+        }
+
         [HttpGet]
         public IActionResult Index()
         {
+            var plugins = kernel.Plugins.Select(p => new
+            {
+                Name = p.Name,
+                Description = p.Description ?? "No description",
+                FunctionCount = p.Count(),
+                Functions = p.Select(f => new
+                {
+                    Name = f.Name,
+                    Description = f.Description ?? "No description"
+                }).ToArray()
+            }).ToArray();
+
             return new OkObjectResult(new
             {
-                Skills = new[]
-                {
-                    new { Name = "Accounting", Description = "Manage financial transactions and reports." },
-                    new { Name = "Data Analysis", Description = "Analyze and visualize data trends." },
-                    new { Name = "Customer Support", Description = "Assist customers with inquiries and issues." }
-                },
+                Plugins = plugins,
                 Status = "Success"
             });
         }

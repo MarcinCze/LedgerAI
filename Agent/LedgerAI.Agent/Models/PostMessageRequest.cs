@@ -2,7 +2,8 @@
 {
     public class PostMessageRequest
     {
-        public string? ThreadId { get; init; }
-        public required string Message { get; init; }
+        public required string Message { get; set; }
+        public string? ThreadId { get; set; }
+        public IFormFile? File { get; set; }
     }
 }
