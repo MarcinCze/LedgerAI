@@ -1,0 +1,26 @@
+meta {
+  name: TrxAPI-Transactions-Update
+  type: http
+  seq: 12
+}
+
+put {
+  url: {{baseUrl}}/transactions/1
+  body: json
+  auth: inherit
+}
+
+body:json {
+  "category": "Shopping",
+  "subcategory": "General",
+  "confidence_score": 0.88
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  name: Update Transaction
+  description: Update an existing transaction
+}

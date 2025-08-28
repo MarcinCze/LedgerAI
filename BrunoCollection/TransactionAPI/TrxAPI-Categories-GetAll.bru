@@ -1,0 +1,20 @@
+meta {
+  name: TrxAPI-Categories-GetAll
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{baseUrl}}/categories?is_active=true&grouped=true&search=food
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  name: Get All Categories
+  description: Retrieve all transaction categories with optional filtering
+}

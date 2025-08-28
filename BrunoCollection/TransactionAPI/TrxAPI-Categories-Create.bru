@@ -1,0 +1,30 @@
+meta {
+  name: TrxAPI-Categories-Create
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{baseUrl}}/categories
+  body: json
+  auth: inherit
+}
+
+body:json {
+  "name": "Food & Dining",
+  "description": "Restaurants, groceries, and food-related expenses",
+  "color": "#FF6B6B",
+  "icon": "🍽️",
+  "parent_id": null,
+  "is_active": true,
+  "is_default": false
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  name: Create Category
+  description: Create a new transaction category
+}

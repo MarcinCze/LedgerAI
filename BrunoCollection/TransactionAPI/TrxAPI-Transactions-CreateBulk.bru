@@ -1,0 +1,47 @@
+meta {
+  name: TrxAPI-Transactions-CreateBulk
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/transactions
+  body: json
+  auth: inherit
+}
+
+body:json {
+  "account_id": 1,
+  "transactions": [
+    {
+      "value_date": "2025-01-06",
+      "booking_date": "2025-01-06",
+      "transaction_type": "DEBIT",
+      "amount": 25.99,
+      "currency_code": "PLN",
+      "transaction_title": "Card payment",
+      "merchant_name": "LIDL",
+      "category": "Food & Dining",
+      "source_bank": "ING"
+    },
+    {
+      "value_date": "2025-01-06",
+      "booking_date": "2025-01-06",
+      "transaction_type": "CREDIT",
+      "amount": 800.00,
+      "currency_code": "PLN",
+      "transaction_title": "Salary",
+      "category": "Income",
+      "source_bank": "ING"
+    }
+  ]
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  name: Bulk Create Transactions
+  description: Create multiple transactions at once (for Semantic Kernel agent)
+}

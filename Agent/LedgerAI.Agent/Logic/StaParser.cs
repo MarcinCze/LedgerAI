@@ -155,8 +155,10 @@ namespace LedgerAI.Agent.Logic
                     tx.EntryDate = ParseEntryDate(tx.ValueDate, m.Groups["entry"].Value);
                 }
                 tx.DebitCredit = m.Groups["dc"].Value[0];
+                tx.TransactionDirection = ParseDebitCreditType(tx.DebitCredit);
                 tx.Amount = ParseAmount(m.Groups["amt"].Value);
                 tx.TransactionType = m.Groups["type"].Success ? m.Groups["type"].Value : null;
+                tx.EntryType = ParseTransactionEntryType(tx.TransactionType);
                 tx.Reference = m.Groups["rest"].Value?.Trim();
             }
             catch (Exception ex)
@@ -173,7 +175,24 @@ namespace LedgerAI.Agent.Logic
 
         private void Parse86Block(BankTransaction tx, string infoCode, string raw86)
         {
-            tx.InfoCode = string.IsNullOrWhiteSpace(infoCode) ? null : infoCode.Trim();
+            // Parse InfoCode - it might contain ~00 subfield (e.g., "073~00VE02")
+            if (!string.IsNullOrWhiteSpace(infoCode))
+            {
+                var trimmedInfoCode = infoCode.Trim();
+                if (trimmedInfoCode.Contains("~00"))
+                {
+                    var parts = trimmedInfoCode.Split("~00", 2);
+                    tx.InfoCode = parts[0].Trim();
+                    if (parts.Length > 1 && !string.IsNullOrWhiteSpace(parts[1]))
+                    {
+                        tx.TransactionSubcode = parts[1].Trim();
+                    }
+                }
+                else
+                {
+                    tx.InfoCode = trimmedInfoCode;
+                }
+            }
 
             // Polish MT940 often encodes subfields as lines starting with ~NN (two digits)
             // e.g. ~20 (description), ~21 (card number), ~30 (bank code), ~31 (bank reference), ~32 (counterparty), ~33 (city), ~34 (extra)
@@ -217,6 +236,10 @@ namespace LedgerAI.Agent.Logic
 
                     switch (key)
                     {
+                        case "00":
+                            // Transaction subcode (additional transaction details)
+                            tx.TransactionSubcode = Append(tx.TransactionSubcode, val);
+                            break;
                         case "20": 
                             tx.Description = Append(tx.Description, val); 
                             break;
@@ -249,6 +272,9 @@ namespace LedgerAI.Agent.Logic
                             tx.CounterpartyFullAddress = Append(tx.CounterpartyFullAddress, val);
                             break;
                         case "22":
+                            // Merchant/website info (e.g., "allegro.pl")
+                            tx.MerchantInfo = Append(tx.MerchantInfo, val);
+                            break;
                         case "23":
                         case "24":
                         case "25":
@@ -318,6 +344,36 @@ namespace LedgerAI.Agent.Logic
                 .Trim();
             
             return string.IsNullOrWhiteSpace(cleaned) ? cardFieldValue : cleaned;
+        }
+
+        private TransactionEntryType ParseTransactionEntryType(string? transactionType)
+        {
+            if (string.IsNullOrWhiteSpace(transactionType) || transactionType.Length == 0)
+                return TransactionEntryType.Unknown;
+
+            var firstChar = transactionType[0];
+            return firstChar switch
+            {
+                'S' => TransactionEntryType.Standard,
+                'F' => TransactionEntryType.Final,
+                'R' => TransactionEntryType.Reversal,
+                'C' => TransactionEntryType.CreditAdjustment,
+                'D' => TransactionEntryType.DebitAdjustment,
+                'P' => TransactionEntryType.Provisional,
+                'E' => TransactionEntryType.ExchangeRate,
+                'I' => TransactionEntryType.Information,
+                _ => TransactionEntryType.Unknown
+            };
+        }
+
+        private DebitCreditType ParseDebitCreditType(char debitCredit)
+        {
+            return debitCredit switch
+            {
+                'D' => DebitCreditType.Debit,
+                'C' => DebitCreditType.Credit,
+                _ => DebitCreditType.Unknown
+            };
         }
 
         private string Append(string existing, string value)

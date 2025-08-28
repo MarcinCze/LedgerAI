@@ -1,0 +1,20 @@
+meta {
+  name: TrxAPI-Accounts-GetById
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accounts/1
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  name: Get Account by ID
+  description: Retrieve a specific bank account by its ID
+}

@@ -1,0 +1,26 @@
+meta {
+  name: TrxAPI-Categories-Update
+  type: http
+  seq: 17
+}
+
+put {
+  url: {{baseUrl}}/categories/1
+  body: json
+  auth: inherit
+}
+
+body:json {
+  "description": "Updated description for food and dining expenses",
+  "color": "#FF8E8E",
+  "icon": "🍕"
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  name: Update Category
+  description: Update an existing category
+}

@@ -1,0 +1,20 @@
+meta {
+  name: TrxAPI-Accounts-GetAll
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accounts?page=1&limit=50&is_active=true
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  name: Get All Accounts
+  description: Retrieve all bank accounts with optional filtering and pagination
+}

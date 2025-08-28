@@ -1,0 +1,20 @@
+meta {
+  name: TrxAPI-Transactions-GetAll
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/transactions?account_id=1&date_from=2025-01-01&date_to=2025-01-31&type=DEBIT&category=Food&search=LIDL&page=1&limit=50
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  name: Get All Transactions
+  description: Retrieve transactions with filtering and pagination
+}

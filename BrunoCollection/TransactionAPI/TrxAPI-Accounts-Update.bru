@@ -1,0 +1,26 @@
+meta {
+  name: TrxAPI-Accounts-Update
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{baseUrl}}/accounts/1
+  body: json
+  auth: inherit
+}
+
+body:json {
+  "current_balance": 1600.00,
+  "available_balance": 1500.00,
+  "last_statement_date": "2025-01-06"
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  name: Update Account
+  description: Update an existing bank account
+}

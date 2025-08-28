@@ -1,0 +1,25 @@
+meta {
+  name: TrxAPI-Auth
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/auth
+  body: json
+  auth: inherit
+}
+
+body:json {
+  "service_name": "semantic_kernel",
+  "scope": ["read", "write"]
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  name: Authentication
+  description: Get JWT token for API access
+}

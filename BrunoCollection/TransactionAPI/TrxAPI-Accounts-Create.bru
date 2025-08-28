@@ -1,0 +1,35 @@
+meta {
+  name: TrxAPI-Accounts-Create
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/accounts
+  body: json
+  auth: inherit
+}
+
+body:json {
+  "account_iban": "PL18105013571000009091885211",
+  "account_number": "1000009091885211",
+  "account_name": "Main Account",
+  "account_owner": "John Doe",
+  "bank_name": "ING Bank",
+  "bank_code": "10501357",
+  "bank_swift": "INGBPLPW",
+  "currency_code": "PLN",
+  "current_balance": 1500.00,
+  "available_balance": 1400.00,
+  "is_active": true,
+  "is_monitored": true
+}
+
+settings {
+  encodeUrl: true
+}
+
+docs {
+  name: Create Account
+  description: Create a new bank account
+}
